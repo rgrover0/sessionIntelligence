@@ -5,9 +5,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.sessionintelligence.core.AnomalyEvent;
-import com.sessionintelligence.core.RequestObservation;
 import com.sessionintelligence.core.SessionIntelligenceListener;
 import com.sessionintelligence.core.SessionKey;
+import com.sessionintelligence.core.SessionRiskScore;
 
 public class PublishingSessionIntelligenceListener implements SessionIntelligenceListener {
     private static final Logger log = LoggerFactory.getLogger(PublishingSessionIntelligenceListener.class);
@@ -19,19 +19,20 @@ public class PublishingSessionIntelligenceListener implements SessionIntelligenc
     }
 
     @Override
-    public void onObservation(RequestObservation observation) {
-        publisher.publishEvent(observation);
-        SessionKey key = observation.sessionKey();
-        log.debug(
-                "session-intelligence observation sessionId={} windowName={} status={}",
+    public void onRiskScoreUpdated(SessionRiskScore score) {
+        publisher.publishEvent(score);
+        SessionKey key = score.sessionKey();
+        log.info(
+                "session-intelligence risk-score sessionId={} windowName={} score={} reasons={}",
                 key != null ? key.sessionId() : null,
                 key != null ? key.windowName() : null,
-                observation.statusCode()
+                score.score(),
+                score.reasonCodes()
         );
     }
 
     @Override
-    public void onAnomaly(AnomalyEvent event) {
+    public void onAnomalyDetected(AnomalyEvent event) {
         publisher.publishEvent(event);
         SessionKey key = event.sessionKey();
         log.warn(

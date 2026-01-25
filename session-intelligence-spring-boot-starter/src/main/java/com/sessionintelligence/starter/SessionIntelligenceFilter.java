@@ -101,7 +101,7 @@ public class SessionIntelligenceFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        String windowName = request.getHeader(properties.getWindowHeaderName());
+        String windowName = request.getHeader(properties.getHeaders().getWindowName());
         HttpSession session = request.getSession(false);
         String sessionId = session != null ? session.getId() : null;
         SessionKey sessionKey = new SessionKey(sessionId, windowName);

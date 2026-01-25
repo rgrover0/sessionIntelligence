@@ -9,7 +9,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>session-intelligence-spring-boot-starter</artifactId>
+    <artifactId>spring-boot-starter-session-intelligence</artifactId>
     <name>Session Intelligence Spring Boot Starter</name>
     <description>Spring Boot starter for session intelligence.</description>
 

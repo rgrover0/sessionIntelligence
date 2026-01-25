@@ -1,11 +1,11 @@
 package com.sessionintelligence.core;
 
 public interface SessionIntelligenceListener {
-    default void onObservation(RequestObservation observation) {
+    default void onRiskScoreUpdated(SessionRiskScore score) {
         // no-op by default
     }
 
-    default void onAnomaly(AnomalyEvent event) {
+    default void onAnomalyDetected(AnomalyEvent event) {
         // no-op by default
     }
 }

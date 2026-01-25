@@ -2,7 +2,10 @@ package com.sessionintelligence.starter;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 import jakarta.servlet.FilterChain;
@@ -102,6 +105,7 @@ public class SessionIntelligenceFilter extends OncePerRequestFilter {
         HttpSession session = request.getSession(false);
         String sessionId = session != null ? session.getId() : null;
         SessionKey sessionKey = new SessionKey(sessionId, windowName);
+        PrincipalInfo principal = resolvePrincipalInfo();
 
         return new RequestObservation(
                 Instant.now(),
@@ -110,7 +114,57 @@ public class SessionIntelligenceFilter extends OncePerRequestFilter {
                 response.getStatus(),
                 request.getRemoteAddr(),
                 request.getHeader("User-Agent"),
+                request.getHeader("Accept-Language"),
+                request.getHeader("Accept-Encoding"),
+                headerNames(request),
+                principal.name(),
+                principal.authenticated(),
                 sessionKey
         );
+    }
+
+    private Set<String> headerNames(HttpServletRequest request) {
+        Enumeration<String> names = request.getHeaderNames();
+        if (names == null) {
+            return Set.of();
+        }
+        Set<String> collected = new HashSet<>();
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            if (name != null && !name.isBlank()) {
+                collected.add(name);
+            }
+        }
+        return collected;
+    }
+
+    private PrincipalInfo resolvePrincipalInfo() {
+        try {
+            Class<?> holder = Class.forName("org.springframework.security.core.context.SecurityContextHolder");
+            Object context = holder.getMethod("getContext").invoke(null);
+            if (context == null) {
+                return PrincipalInfo.anonymous();
+            }
+            Object authentication = context.getClass().getMethod("getAuthentication").invoke(context);
+            if (authentication == null) {
+                return PrincipalInfo.anonymous();
+            }
+            boolean authenticated = Boolean.TRUE.equals(
+                    authentication.getClass().getMethod("isAuthenticated").invoke(authentication)
+            );
+            Object name = authentication.getClass().getMethod("getName").invoke(authentication);
+            return new PrincipalInfo(name != null ? name.toString() : null, authenticated);
+        } catch (ClassNotFoundException ex) {
+            return PrincipalInfo.anonymous();
+        } catch (Exception ex) {
+            log.debug("Session intelligence principal lookup failed", ex);
+            return PrincipalInfo.anonymous();
+        }
+    }
+
+    private record PrincipalInfo(String name, boolean authenticated) {
+        static PrincipalInfo anonymous() {
+            return new PrincipalInfo(null, false);
+        }
     }
 }

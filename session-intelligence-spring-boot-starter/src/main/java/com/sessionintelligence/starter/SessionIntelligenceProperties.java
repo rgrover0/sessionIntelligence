@@ -12,6 +12,7 @@ public class SessionIntelligenceProperties {
     private List<String> includePathPatterns = new ArrayList<>();
     private List<String> excludePathPatterns = new ArrayList<>();
     private double sampleRate = 1.0d;
+    private FingerprintProperties fingerprint = new FingerprintProperties();
 
     public boolean isEnabled() {
         return enabled;
@@ -51,5 +52,43 @@ public class SessionIntelligenceProperties {
 
     public void setSampleRate(double sampleRate) {
         this.sampleRate = sampleRate;
+    }
+
+    public FingerprintProperties getFingerprint() {
+        return fingerprint;
+    }
+
+    public void setFingerprint(FingerprintProperties fingerprint) {
+        this.fingerprint = fingerprint;
+    }
+
+    public static class FingerprintProperties {
+        private String salt = "change-me";
+        private List<String> additionalSalts = new ArrayList<>();
+        private boolean includeIpSegment = false;
+
+        public String getSalt() {
+            return salt;
+        }
+
+        public void setSalt(String salt) {
+            this.salt = salt;
+        }
+
+        public List<String> getAdditionalSalts() {
+            return additionalSalts;
+        }
+
+        public void setAdditionalSalts(List<String> additionalSalts) {
+            this.additionalSalts = additionalSalts;
+        }
+
+        public boolean isIncludeIpSegment() {
+            return includeIpSegment;
+        }
+
+        public void setIncludeIpSegment(boolean includeIpSegment) {
+            this.includeIpSegment = includeIpSegment;
+        }
     }
 }

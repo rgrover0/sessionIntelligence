@@ -11,6 +11,8 @@
     <modules>
         <module>session-intelligence-core</module>
         <module>session-intelligence-spring-boot-starter</module>
+        <module>session-intelligence-store-infinispan</module>
+        <module>session-intelligence-otel</module>
     </modules>
 
     <properties>

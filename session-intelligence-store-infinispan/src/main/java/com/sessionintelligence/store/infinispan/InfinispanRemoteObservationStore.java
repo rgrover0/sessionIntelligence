@@ -1,4 +1,4 @@
-package com.sessionintelligence.starter;
+package com.sessionintelligence.store.infinispan;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +10,7 @@ import com.sessionintelligence.core.SessionRiskScore;
 import com.sessionintelligence.core.SessionSnapshot;
 import com.sessionintelligence.core.SnapshotUpdate;
 import com.sessionintelligence.core.WindowSnapshot;
+import com.sessionintelligence.starter.SessionIntelligenceProperties;
 
 public class InfinispanRemoteObservationStore implements ObservationStore {
     private static final Logger log = LoggerFactory.getLogger(InfinispanRemoteObservationStore.class);

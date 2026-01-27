@@ -1,0 +1,4 @@
+session-intelligence:
+  storage:
+    backend: INFINISPAN_REMOTE
+    telemetry-cache-name: "session-intelligence-telemetry"

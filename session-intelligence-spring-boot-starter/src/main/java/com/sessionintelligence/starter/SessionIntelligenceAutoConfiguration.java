@@ -50,17 +50,6 @@ public class SessionIntelligenceAutoConfiguration {
     @ConditionalOnProperty(
             prefix = "session-intelligence.storage",
             name = "backend",
-            havingValue = "INFINISPAN_REMOTE"
-    )
-    public ObservationStore sessionIntelligenceObservationStoreInfinispan(SessionIntelligenceProperties properties) {
-        return new InfinispanRemoteObservationStore(properties);
-    }
-
-    @Bean(name = "sessionIntelligenceObservationStore")
-    @ConditionalOnMissingBean(name = "sessionIntelligenceObservationStore")
-    @ConditionalOnProperty(
-            prefix = "session-intelligence.storage",
-            name = "backend",
             havingValue = "REDIS"
     )
     public ObservationStore sessionIntelligenceObservationStoreRedis() {
@@ -130,17 +119,6 @@ public class SessionIntelligenceAutoConfiguration {
     @ConditionalOnMissingBean(SessionIntelligenceListener.class)
     public SessionIntelligenceListener fallbackSessionIntelligenceListener() {
         return new NoOpSessionIntelligenceListener();
-    }
-
-    @Bean
-    @ConditionalOnProperty(
-            prefix = "session-intelligence.telemetry",
-            name = "otel-enabled",
-            havingValue = "true"
-    )
-    @ConditionalOnClass(name = "io.opentelemetry.api.OpenTelemetry")
-    public SessionIntelligenceListener otelSessionIntelligenceListener(SessionIntelligenceHasher hasher) {
-        return new OtelSessionIntelligenceListener(hasher);
     }
 
     @Bean

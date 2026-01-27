@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+session-intelligence:
+  enabled: true
+  include-path-patterns:
+    - "/rate"
+  headers:
+    window-name: "X-Window-Name"
+  telemetry:
+    metrics-enabled: true
+  storage:
+    backend: IN_MEMORY

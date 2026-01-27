@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.sessionintelligence</groupId>
+        <artifactId>session-intelligence</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>session-intelligence-store-infinispan</artifactId>
+    <name>Session Intelligence Infinispan Store</name>
+    <description>Infinispan-backed observation store for session intelligence.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.sessionintelligence</groupId>
+            <artifactId>session-intelligence-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sessionintelligence</groupId>
+            <artifactId>spring-boot-starter-session-intelligence</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+    </dependencies>
+</project>

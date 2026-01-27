@@ -2,12 +2,10 @@ package com.sessionintelligence.core;
 
 import java.time.Instant;
 
-public record AnomalyEvent(
-        Instant timestamp,
-        SessionKey sessionKey,
+public record DetectorFinding(
         Severity severity,
         ReasonCode reasonCode,
         EvidenceSummary evidenceSummary,
-        String message
+        Instant detectedAt
 ) {
 }

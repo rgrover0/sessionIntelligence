@@ -8,12 +8,13 @@ import com.sessionintelligence.core.RequestObservation;
 import com.sessionintelligence.core.SessionKey;
 import com.sessionintelligence.core.WindowObservationStore;
 import com.sessionintelligence.core.WindowSnapshot;
+import com.sessionintelligence.core.SnapshotUpdate;
 
 public class InMemoryWindowObservationStore implements WindowObservationStore {
     private final ConcurrentMap<SessionKey, WindowSnapshot> snapshots = new ConcurrentHashMap<>();
 
     @Override
-    public WindowSnapshot record(RequestObservation observation, Fingerprint fingerprint) {
+    public SnapshotUpdate<WindowSnapshot> record(RequestObservation observation, Fingerprint fingerprint) {
         if (observation == null || observation.sessionKey() == null) {
             return null;
         }
@@ -24,7 +25,8 @@ public class InMemoryWindowObservationStore implements WindowObservationStore {
         if (key.windowName() == null || key.windowName().isBlank()) {
             return null;
         }
-        return snapshots.compute(key, (ignored, existing) -> {
+        WindowSnapshot previous = snapshots.get(key);
+        WindowSnapshot current = snapshots.compute(key, (ignored, existing) -> {
             long nextCount = existing == null ? 1L : existing.requestCount() + 1L;
             String currentFingerprint = fingerprint != null ? fingerprint.currentHash() : null;
             return new WindowSnapshot(
@@ -35,5 +37,6 @@ public class InMemoryWindowObservationStore implements WindowObservationStore {
                     currentFingerprint
             );
         });
+        return new SnapshotUpdate<>(previous, current);
     }
 }

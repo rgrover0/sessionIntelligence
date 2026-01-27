@@ -9,7 +9,7 @@ public class SessionIntelligenceEngine {
     private final SessionRiskScoreStore riskScoreStore;
     private final FingerprintStrategy fingerprintStrategy;
     private final List<RiskScorer> riskScorers;
-    private final List<AnomalyDetector> anomalyDetectors;
+    private final List<ObservationDetector> detectors;
     private final List<SessionIntelligenceListener> listeners;
 
     public SessionIntelligenceEngine(
@@ -18,7 +18,7 @@ public class SessionIntelligenceEngine {
             SessionRiskScoreStore riskScoreStore,
             FingerprintStrategy fingerprintStrategy,
             List<RiskScorer> riskScorers,
-            List<AnomalyDetector> anomalyDetectors,
+            List<ObservationDetector> detectors,
             List<SessionIntelligenceListener> listeners
     ) {
         this.sessionObservationStore = Objects.requireNonNull(
@@ -35,68 +35,80 @@ public class SessionIntelligenceEngine {
                 "fingerprintStrategy"
         );
         this.riskScorers = riskScorers == null ? List.of() : List.copyOf(riskScorers);
-        this.anomalyDetectors = anomalyDetectors == null ? List.of() : List.copyOf(anomalyDetectors);
+        this.detectors = detectors == null ? List.of() : List.copyOf(detectors);
         this.listeners = listeners == null ? List.of() : List.copyOf(listeners);
     }
 
     public void observe(RequestObservation observation) {
         Objects.requireNonNull(observation, "observation");
         Fingerprint fingerprint = fingerprintStrategy.fingerprint(observation);
-        SessionSnapshot sessionSnapshot = sessionObservationStore.record(observation, fingerprint);
-        WindowSnapshot windowSnapshot = windowObservationStore.record(observation, fingerprint);
-        SessionRiskScore score = buildRiskScore(observation, sessionSnapshot, windowSnapshot);
+        SnapshotUpdate<SessionSnapshot> sessionUpdate =
+                sessionObservationStore.record(observation, fingerprint);
+        SnapshotUpdate<WindowSnapshot> windowUpdate =
+                windowObservationStore.record(observation, fingerprint);
+        DetectionContext context = new DetectionContext(
+                observation,
+                sessionUpdate,
+                windowUpdate,
+                fingerprint
+        );
+        List<DetectorFinding> findings = runDetectors(context);
+        emitAnomalies(findings, observation.sessionKey());
+        SessionRiskScore score = buildRiskScore(context, findings);
         if (score != null) {
             riskScoreStore.save(score);
             for (SessionIntelligenceListener listener : listeners) {
                 listener.onRiskScoreUpdated(score);
             }
         }
-        List<AnomalyEvent> anomalies = detectAnomalies(observation, sessionSnapshot, windowSnapshot);
-        for (AnomalyEvent anomaly : anomalies) {
-            for (SessionIntelligenceListener listener : listeners) {
-                listener.onAnomalyDetected(anomaly);
-            }
-        }
     }
 
     private SessionRiskScore buildRiskScore(
-            RequestObservation observation,
-            SessionSnapshot sessionSnapshot,
-            WindowSnapshot windowSnapshot
+            DetectionContext context,
+            List<DetectorFinding> findings
     ) {
         if (riskScorers.isEmpty()) {
             return null;
         }
         for (RiskScorer scorer : riskScorers) {
-            SessionRiskScore scored = scorer.score(observation, sessionSnapshot, windowSnapshot);
+            SessionRiskScore scored = scorer.score(context, findings);
             if (scored != null) {
                 return scored;
             }
         }
-        return new SessionRiskScore(
-                observation.sessionKey(),
-                0,
-                List.of(),
-                EvidenceSummary.from(sessionSnapshot, windowSnapshot),
-                observation.timestamp()
-        );
+        return null;
     }
 
-    private List<AnomalyEvent> detectAnomalies(
-            RequestObservation observation,
-            SessionSnapshot sessionSnapshot,
-            WindowSnapshot windowSnapshot
-    ) {
-        if (anomalyDetectors.isEmpty()) {
+    private List<DetectorFinding> runDetectors(DetectionContext context) {
+        if (detectors.isEmpty()) {
             return List.of();
         }
-        List<AnomalyEvent> anomalies = new java.util.ArrayList<>();
-        for (AnomalyDetector detector : anomalyDetectors) {
-            List<AnomalyEvent> detected = detector.detect(observation, sessionSnapshot, windowSnapshot);
+        List<DetectorFinding> findings = new java.util.ArrayList<>();
+        for (ObservationDetector detector : detectors) {
+            List<DetectorFinding> detected = detector.detect(context);
             if (detected != null && !detected.isEmpty()) {
-                anomalies.addAll(detected);
+                findings.addAll(detected);
             }
         }
-        return anomalies;
+        return findings;
+    }
+
+    private void emitAnomalies(List<DetectorFinding> findings, SessionKey sessionKey) {
+        if (findings == null || findings.isEmpty()) {
+            return;
+        }
+        for (DetectorFinding finding : findings) {
+            AnomalyEvent event = new AnomalyEvent(
+                    finding.detectedAt(),
+                    sessionKey,
+                    finding.severity(),
+                    finding.reasonCode(),
+                    finding.evidenceSummary(),
+                    null
+            );
+            for (SessionIntelligenceListener listener : listeners) {
+                listener.onAnomalyDetected(event);
+            }
+        }
     }
 }

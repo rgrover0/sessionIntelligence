@@ -1,5 +1,5 @@
 package com.sessionintelligence.core;
 
 public interface WindowObservationStore {
-    WindowSnapshot record(RequestObservation observation, Fingerprint fingerprint);
+    SnapshotUpdate<WindowSnapshot> record(RequestObservation observation, Fingerprint fingerprint);
 }

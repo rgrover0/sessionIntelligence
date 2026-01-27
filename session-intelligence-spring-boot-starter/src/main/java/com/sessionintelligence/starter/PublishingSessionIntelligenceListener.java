@@ -36,8 +36,9 @@ public class PublishingSessionIntelligenceListener implements SessionIntelligenc
         publisher.publishEvent(event);
         SessionKey key = event.sessionKey();
         log.warn(
-                "session-intelligence anomaly type={} sessionId={} windowName={}",
-                event.type(),
+                "session-intelligence anomaly reason={} severity={} sessionId={} windowName={}",
+                event.reasonCode(),
+                event.severity(),
                 key != null ? key.sessionId() : null,
                 key != null ? key.windowName() : null
         );

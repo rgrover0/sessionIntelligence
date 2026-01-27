@@ -2,9 +2,14 @@ package com.sessionintelligence.starter;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import com.sessionintelligence.core.ReasonCode;
+import com.sessionintelligence.core.Severity;
 
 @ConfigurationProperties(prefix = "session-intelligence")
 public class SessionIntelligenceProperties {
@@ -18,6 +23,7 @@ public class SessionIntelligenceProperties {
     private Storage storage = new Storage();
     private Telemetry telemetry = new Telemetry();
     private FingerprintProperties fingerprint = new FingerprintProperties();
+    private Scoring scoring = new Scoring();
 
     public boolean isEnabled() {
         return enabled;
@@ -89,6 +95,14 @@ public class SessionIntelligenceProperties {
 
     public void setTelemetry(Telemetry telemetry) {
         this.telemetry = telemetry;
+    }
+
+    public Scoring getScoring() {
+        return scoring;
+    }
+
+    public void setScoring(Scoring scoring) {
+        this.scoring = scoring;
     }
 
     public FingerprintProperties getFingerprint() {
@@ -176,6 +190,8 @@ public class SessionIntelligenceProperties {
         private int maxParallelWindows = 10;
         private Duration fingerprintDriftWindow = Duration.ofMinutes(5);
         private double fingerprintDriftTolerance = 0.5d;
+        private Duration windowExplosionWindow = Duration.ofMinutes(2);
+        private List<String> rateEndpointPatterns = new ArrayList<>();
 
         public int getMaxRequestsPerMinute() {
             return maxRequestsPerMinute;
@@ -207,6 +223,22 @@ public class SessionIntelligenceProperties {
 
         public void setFingerprintDriftTolerance(double fingerprintDriftTolerance) {
             this.fingerprintDriftTolerance = fingerprintDriftTolerance;
+        }
+
+        public Duration getWindowExplosionWindow() {
+            return windowExplosionWindow;
+        }
+
+        public void setWindowExplosionWindow(Duration windowExplosionWindow) {
+            this.windowExplosionWindow = windowExplosionWindow;
+        }
+
+        public List<String> getRateEndpointPatterns() {
+            return rateEndpointPatterns;
+        }
+
+        public void setRateEndpointPatterns(List<String> rateEndpointPatterns) {
+            this.rateEndpointPatterns = rateEndpointPatterns;
         }
     }
 
@@ -245,6 +277,77 @@ public class SessionIntelligenceProperties {
 
         public void setOtelEnabled(boolean otelEnabled) {
             this.otelEnabled = otelEnabled;
+        }
+    }
+
+    public static class Scoring {
+        private int maxScore = 100;
+        private int defaultWeight = 5;
+        private Duration decayWindow = Duration.ofMinutes(30);
+        private Map<ReasonCode, Integer> weights = defaultWeights();
+        private Map<Severity, Double> severityMultipliers = defaultSeverityMultipliers();
+
+        public int getMaxScore() {
+            return maxScore;
+        }
+
+        public void setMaxScore(int maxScore) {
+            this.maxScore = maxScore;
+        }
+
+        public int getDefaultWeight() {
+            return defaultWeight;
+        }
+
+        public void setDefaultWeight(int defaultWeight) {
+            this.defaultWeight = defaultWeight;
+        }
+
+        public Duration getDecayWindow() {
+            return decayWindow;
+        }
+
+        public void setDecayWindow(Duration decayWindow) {
+            this.decayWindow = decayWindow;
+        }
+
+        public Map<ReasonCode, Integer> getWeights() {
+            return weights;
+        }
+
+        public void setWeights(Map<ReasonCode, Integer> weights) {
+            this.weights = weights;
+        }
+
+        public Map<Severity, Double> getSeverityMultipliers() {
+            return severityMultipliers;
+        }
+
+        public void setSeverityMultipliers(Map<Severity, Double> severityMultipliers) {
+            this.severityMultipliers = severityMultipliers;
+        }
+
+        private static Map<ReasonCode, Integer> defaultWeights() {
+            Map<ReasonCode, Integer> values = new EnumMap<>(ReasonCode.class);
+            values.put(ReasonCode.SESSION_REUSE, 15);
+            values.put(ReasonCode.SESSION_RESURRECTION, 20);
+            values.put(ReasonCode.WINDOW_COLLISION, 20);
+            values.put(ReasonCode.WINDOW_EXPLOSION, 15);
+            values.put(ReasonCode.FINGERPRINT_DRIFT, 10);
+            values.put(ReasonCode.HIGH_REQUEST_RATE, 25);
+            values.put(ReasonCode.MISSING_HEADERS, 10);
+            values.put(ReasonCode.OTHER, 5);
+            values.put(ReasonCode.NONE, 0);
+            return values;
+        }
+
+        private static Map<Severity, Double> defaultSeverityMultipliers() {
+            Map<Severity, Double> values = new EnumMap<>(Severity.class);
+            values.put(Severity.LOW, 0.5d);
+            values.put(Severity.MEDIUM, 1.0d);
+            values.put(Severity.HIGH, 1.5d);
+            values.put(Severity.CRITICAL, 2.0d);
+            return values;
         }
     }
 }

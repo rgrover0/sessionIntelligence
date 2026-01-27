@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
-import com.sessionintelligence.core.AnomalyDetector;
 import com.sessionintelligence.core.FingerprintStrategy;
+import com.sessionintelligence.core.ObservationDetector;
 import com.sessionintelligence.core.RiskScorer;
 import com.sessionintelligence.core.SessionActionAdvisor;
 import com.sessionintelligence.core.SessionIntelligenceEngine;
@@ -31,7 +31,12 @@ class SessionIntelligenceAutoConfigurationTest {
             assertThat(context).hasSingleBean(SessionRiskScoreStore.class);
             assertThat(context).hasSingleBean(FingerprintStrategy.class);
             assertThat(context).hasSingleBean(RiskScorer.class);
-            assertThat(context).hasSingleBean(AnomalyDetector.class);
+            assertThat(context).hasBean("fingerprintDriftDetector");
+            assertThat(context).hasBean("requestRateDetector");
+            assertThat(context).hasBean("windowExplosionDetector");
+            assertThat(context).hasBean("windowCollisionDetector");
+            assertThat(context).hasBean("sessionResurrectionDetector");
+            assertThat(context.getBeansOfType(ObservationDetector.class)).isNotEmpty();
             assertThat(context).hasSingleBean(SessionActionAdvisor.class);
             assertThat(context).hasSingleBean(SessionIntelligenceListener.class);
         });

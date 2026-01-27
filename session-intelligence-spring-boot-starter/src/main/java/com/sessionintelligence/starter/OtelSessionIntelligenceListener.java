@@ -18,6 +18,6 @@ public class OtelSessionIntelligenceListener implements SessionIntelligenceListe
 
     @Override
     public void onAnomalyDetected(AnomalyEvent event) {
-        log.debug("session-intelligence otel export anomaly type={}", event.type());
+        log.debug("session-intelligence otel export anomaly reason={}", event.reasonCode());
     }
 }

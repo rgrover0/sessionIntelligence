@@ -10,8 +10,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.ApplicationEventPublisher;
 
-import com.sessionintelligence.core.AnomalyDetector;
 import com.sessionintelligence.core.FingerprintStrategy;
+import com.sessionintelligence.core.ObservationDetector;
 import com.sessionintelligence.core.RiskScorer;
 import com.sessionintelligence.core.SessionActionAdvisor;
 import com.sessionintelligence.core.SessionIntelligenceEngine;
@@ -123,20 +123,68 @@ public class SessionIntelligenceAutoConfiguration {
             havingValue = "true",
             matchIfMissing = true
     )
-    public RiskScorer riskScorer() {
-        return new NoOpRiskScorer();
+    public RiskScorer riskScorer(SessionIntelligenceProperties properties) {
+        return new WeightedRiskScorer(properties);
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(FingerprintDriftDetector.class)
     @ConditionalOnProperty(
             prefix = "session-intelligence.features",
             name = "anomaly-detection",
             havingValue = "true",
             matchIfMissing = true
     )
-    public AnomalyDetector anomalyDetector() {
-        return new NoOpAnomalyDetector();
+    public FingerprintDriftDetector fingerprintDriftDetector(SessionIntelligenceProperties properties) {
+        return new FingerprintDriftDetector(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(RequestRateDetector.class)
+    @ConditionalOnProperty(
+            prefix = "session-intelligence.features",
+            name = "anomaly-detection",
+            havingValue = "true",
+            matchIfMissing = true
+    )
+    public RequestRateDetector requestRateDetector(SessionIntelligenceProperties properties) {
+        return new RequestRateDetector(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(WindowExplosionDetector.class)
+    @ConditionalOnProperty(
+            prefix = "session-intelligence.features",
+            name = "anomaly-detection",
+            havingValue = "true",
+            matchIfMissing = true
+    )
+    public WindowExplosionDetector windowExplosionDetector(SessionIntelligenceProperties properties) {
+        return new WindowExplosionDetector(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(WindowCollisionDetector.class)
+    @ConditionalOnProperty(
+            prefix = "session-intelligence.features",
+            name = "anomaly-detection",
+            havingValue = "true",
+            matchIfMissing = true
+    )
+    public WindowCollisionDetector windowCollisionDetector(SessionIntelligenceProperties properties) {
+        return new WindowCollisionDetector(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(SessionResurrectionDetector.class)
+    @ConditionalOnProperty(
+            prefix = "session-intelligence.features",
+            name = "anomaly-detection",
+            havingValue = "true",
+            matchIfMissing = true
+    )
+    public SessionResurrectionDetector sessionResurrectionDetector() {
+        return new SessionResurrectionDetector();
     }
 
     @Bean
@@ -147,7 +195,7 @@ public class SessionIntelligenceAutoConfiguration {
             SessionRiskScoreStore riskScoreStore,
             FingerprintStrategy fingerprintStrategy,
             List<RiskScorer> riskScorers,
-            List<AnomalyDetector> anomalyDetectors,
+            List<ObservationDetector> detectors,
             List<SessionIntelligenceListener> listeners
     ) {
         return new SessionIntelligenceEngine(
@@ -156,7 +204,7 @@ public class SessionIntelligenceAutoConfiguration {
                 riskScoreStore,
                 fingerprintStrategy,
                 riskScorers,
-                anomalyDetectors,
+                detectors,
                 listeners
         );
     }

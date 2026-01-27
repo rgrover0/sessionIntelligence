@@ -11,14 +11,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.sessionintelligence.core.FingerprintStrategy;
+import com.sessionintelligence.core.ObservationStore;
 import com.sessionintelligence.core.ObservationDetector;
 import com.sessionintelligence.core.RiskScorer;
 import com.sessionintelligence.core.SessionActionAdvisor;
 import com.sessionintelligence.core.SessionIntelligenceEngine;
 import com.sessionintelligence.core.SessionIntelligenceListener;
-import com.sessionintelligence.core.SessionObservationStore;
-import com.sessionintelligence.core.SessionRiskScoreStore;
-import com.sessionintelligence.core.WindowObservationStore;
 
 @AutoConfiguration
 @EnableConfigurationProperties(SessionIntelligenceProperties.class)
@@ -38,8 +36,8 @@ public class SessionIntelligenceAutoConfiguration {
             havingValue = "IN_MEMORY",
             matchIfMissing = true
     )
-    public SessionObservationStore sessionObservationStore() {
-        return new InMemorySessionObservationStore();
+    public ObservationStore inMemoryObservationStore() {
+        return new InMemoryObservationStore();
     }
 
     @Bean
@@ -47,11 +45,10 @@ public class SessionIntelligenceAutoConfiguration {
     @ConditionalOnProperty(
             prefix = "session-intelligence.storage",
             name = "backend",
-            havingValue = "IN_MEMORY",
-            matchIfMissing = true
+            havingValue = "INFINISPAN_REMOTE"
     )
-    public WindowObservationStore windowObservationStore() {
-        return new InMemoryWindowObservationStore();
+    public ObservationStore infinispanObservationStore(SessionIntelligenceProperties properties) {
+        return new InfinispanRemoteObservationStore(properties);
     }
 
     @Bean
@@ -59,11 +56,10 @@ public class SessionIntelligenceAutoConfiguration {
     @ConditionalOnProperty(
             prefix = "session-intelligence.storage",
             name = "backend",
-            havingValue = "IN_MEMORY",
-            matchIfMissing = true
+            havingValue = "REDIS"
     )
-    public SessionRiskScoreStore sessionRiskScoreStore() {
-        return new InMemorySessionRiskScoreStore();
+    public ObservationStore redisObservationStore() {
+        return new RedisObservationStore();
     }
 
     @Bean
@@ -190,18 +186,14 @@ public class SessionIntelligenceAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public SessionIntelligenceEngine sessionIntelligenceEngine(
-            SessionObservationStore sessionObservationStore,
-            WindowObservationStore windowObservationStore,
-            SessionRiskScoreStore riskScoreStore,
+            ObservationStore observationStore,
             FingerprintStrategy fingerprintStrategy,
             List<RiskScorer> riskScorers,
             List<ObservationDetector> detectors,
             List<SessionIntelligenceListener> listeners
     ) {
         return new SessionIntelligenceEngine(
-                sessionObservationStore,
-                windowObservationStore,
-                riskScoreStore,
+                observationStore,
                 fingerprintStrategy,
                 riskScorers,
                 detectors,

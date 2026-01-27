@@ -244,6 +244,7 @@ public class SessionIntelligenceProperties {
 
     public static class Storage {
         private Backend backend = Backend.IN_MEMORY;
+        private String telemetryCacheName = "session-intelligence-telemetry";
 
         public Backend getBackend() {
             return backend;
@@ -253,9 +254,18 @@ public class SessionIntelligenceProperties {
             this.backend = backend;
         }
 
+        public String getTelemetryCacheName() {
+            return telemetryCacheName;
+        }
+
+        public void setTelemetryCacheName(String telemetryCacheName) {
+            this.telemetryCacheName = telemetryCacheName;
+        }
+
         public enum Backend {
             IN_MEMORY,
-            REMOTE_CACHE
+            INFINISPAN_REMOTE,
+            REDIS
         }
     }
 

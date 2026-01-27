@@ -4,32 +4,20 @@ import java.util.List;
 import java.util.Objects;
 
 public class SessionIntelligenceEngine {
-    private final SessionObservationStore sessionObservationStore;
-    private final WindowObservationStore windowObservationStore;
-    private final SessionRiskScoreStore riskScoreStore;
+    private final ObservationStore observationStore;
     private final FingerprintStrategy fingerprintStrategy;
     private final List<RiskScorer> riskScorers;
     private final List<ObservationDetector> detectors;
     private final List<SessionIntelligenceListener> listeners;
 
     public SessionIntelligenceEngine(
-            SessionObservationStore sessionObservationStore,
-            WindowObservationStore windowObservationStore,
-            SessionRiskScoreStore riskScoreStore,
+            ObservationStore observationStore,
             FingerprintStrategy fingerprintStrategy,
             List<RiskScorer> riskScorers,
             List<ObservationDetector> detectors,
             List<SessionIntelligenceListener> listeners
     ) {
-        this.sessionObservationStore = Objects.requireNonNull(
-                sessionObservationStore,
-                "sessionObservationStore"
-        );
-        this.windowObservationStore = Objects.requireNonNull(
-                windowObservationStore,
-                "windowObservationStore"
-        );
-        this.riskScoreStore = Objects.requireNonNull(riskScoreStore, "riskScoreStore");
+        this.observationStore = Objects.requireNonNull(observationStore, "observationStore");
         this.fingerprintStrategy = Objects.requireNonNull(
                 fingerprintStrategy,
                 "fingerprintStrategy"
@@ -43,9 +31,9 @@ public class SessionIntelligenceEngine {
         Objects.requireNonNull(observation, "observation");
         Fingerprint fingerprint = fingerprintStrategy.fingerprint(observation);
         SnapshotUpdate<SessionSnapshot> sessionUpdate =
-                sessionObservationStore.record(observation, fingerprint);
+                observationStore.recordSession(observation, fingerprint);
         SnapshotUpdate<WindowSnapshot> windowUpdate =
-                windowObservationStore.record(observation, fingerprint);
+                observationStore.recordWindow(observation, fingerprint);
         DetectionContext context = new DetectionContext(
                 observation,
                 sessionUpdate,
@@ -56,7 +44,7 @@ public class SessionIntelligenceEngine {
         emitAnomalies(findings, observation.sessionKey());
         SessionRiskScore score = buildRiskScore(context, findings);
         if (score != null) {
-            riskScoreStore.save(score);
+            observationStore.save(score);
             for (SessionIntelligenceListener listener : listeners) {
                 listener.onRiskScoreUpdated(score);
             }

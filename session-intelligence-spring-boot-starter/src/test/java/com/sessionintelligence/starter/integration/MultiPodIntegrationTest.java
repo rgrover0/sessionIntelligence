@@ -10,7 +10,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -44,7 +47,7 @@ import com.sessionintelligence.core.WindowSnapshot;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class MultiPodIntegrationTest {
     private static final String INFINISPAN_IMAGE = "quay.io/infinispan/server:15.0";
 
@@ -56,6 +59,14 @@ class MultiPodIntegrationTest {
 
     private final SharedObservationStore sharedStore = SharedObservationStore.INSTANCE;
     private final SharedListener sharedListener = SharedListener.INSTANCE;
+
+    @BeforeAll
+    static void requireDocker() {
+        Assumptions.assumeTrue(
+                DockerClientFactory.instance().isDockerAvailable(),
+                "Docker not available"
+        );
+    }
 
     @AfterEach
     void resetSharedState() {

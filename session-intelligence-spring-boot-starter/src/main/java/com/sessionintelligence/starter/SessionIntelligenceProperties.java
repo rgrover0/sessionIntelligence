@@ -24,6 +24,8 @@ public class SessionIntelligenceProperties {
     private Telemetry telemetry = new Telemetry();
     private FingerprintProperties fingerprint = new FingerprintProperties();
     private Scoring scoring = new Scoring();
+    private Privacy privacy = new Privacy();
+    private Safety safety = new Safety();
 
     public boolean isEnabled() {
         return enabled;
@@ -103,6 +105,22 @@ public class SessionIntelligenceProperties {
 
     public void setScoring(Scoring scoring) {
         this.scoring = scoring;
+    }
+
+    public Privacy getPrivacy() {
+        return privacy;
+    }
+
+    public void setPrivacy(Privacy privacy) {
+        this.privacy = privacy;
+    }
+
+    public Safety getSafety() {
+        return safety;
+    }
+
+    public void setSafety(Safety safety) {
+        this.safety = safety;
     }
 
     public FingerprintProperties getFingerprint() {
@@ -296,6 +314,120 @@ public class SessionIntelligenceProperties {
 
         public void setMetricsEnabled(boolean metricsEnabled) {
             this.metricsEnabled = metricsEnabled;
+        }
+    }
+
+    public static class Privacy {
+        private boolean storeRawIp = false;
+        private boolean storeRawUserAgent = false;
+        private boolean ipSignalsEnabled = false;
+        private Duration retentionTtl = Duration.ofHours(24);
+
+        public boolean isStoreRawIp() {
+            return storeRawIp;
+        }
+
+        public void setStoreRawIp(boolean storeRawIp) {
+            this.storeRawIp = storeRawIp;
+        }
+
+        public boolean isStoreRawUserAgent() {
+            return storeRawUserAgent;
+        }
+
+        public void setStoreRawUserAgent(boolean storeRawUserAgent) {
+            this.storeRawUserAgent = storeRawUserAgent;
+        }
+
+        public boolean isIpSignalsEnabled() {
+            return ipSignalsEnabled;
+        }
+
+        public void setIpSignalsEnabled(boolean ipSignalsEnabled) {
+            this.ipSignalsEnabled = ipSignalsEnabled;
+        }
+
+        public Duration getRetentionTtl() {
+            return retentionTtl;
+        }
+
+        public void setRetentionTtl(Duration retentionTtl) {
+            this.retentionTtl = retentionTtl;
+        }
+    }
+
+    public static class Safety {
+        private boolean failOpenEnabled = true;
+        private int circuitBreakerFailureThreshold = 3;
+        private Duration circuitBreakerOpenDuration = Duration.ofSeconds(30);
+        private int maxHeaderCount = 50;
+        private int maxHeaderNameLength = 64;
+        private int maxWindowNameLength = 64;
+        private String windowNamePattern = "^[A-Za-z0-9._-]{1,64}$";
+        private int maxWindowNamesTracked = 100;
+
+        public boolean isFailOpenEnabled() {
+            return failOpenEnabled;
+        }
+
+        public void setFailOpenEnabled(boolean failOpenEnabled) {
+            this.failOpenEnabled = failOpenEnabled;
+        }
+
+        public int getCircuitBreakerFailureThreshold() {
+            return circuitBreakerFailureThreshold;
+        }
+
+        public void setCircuitBreakerFailureThreshold(int circuitBreakerFailureThreshold) {
+            this.circuitBreakerFailureThreshold = circuitBreakerFailureThreshold;
+        }
+
+        public Duration getCircuitBreakerOpenDuration() {
+            return circuitBreakerOpenDuration;
+        }
+
+        public void setCircuitBreakerOpenDuration(Duration circuitBreakerOpenDuration) {
+            this.circuitBreakerOpenDuration = circuitBreakerOpenDuration;
+        }
+
+        public int getMaxHeaderCount() {
+            return maxHeaderCount;
+        }
+
+        public void setMaxHeaderCount(int maxHeaderCount) {
+            this.maxHeaderCount = maxHeaderCount;
+        }
+
+        public int getMaxHeaderNameLength() {
+            return maxHeaderNameLength;
+        }
+
+        public void setMaxHeaderNameLength(int maxHeaderNameLength) {
+            this.maxHeaderNameLength = maxHeaderNameLength;
+        }
+
+        public int getMaxWindowNameLength() {
+            return maxWindowNameLength;
+        }
+
+        public void setMaxWindowNameLength(int maxWindowNameLength) {
+            this.maxWindowNameLength = maxWindowNameLength;
+        }
+
+        public String getWindowNamePattern() {
+            return windowNamePattern;
+        }
+
+        public void setWindowNamePattern(String windowNamePattern) {
+            this.windowNamePattern = windowNamePattern;
+        }
+
+        public int getMaxWindowNamesTracked() {
+            return maxWindowNamesTracked;
+        }
+
+        public void setMaxWindowNamesTracked(int maxWindowNamesTracked) {
+            this.maxWindowNamesTracked = maxWindowNamesTracked;
         }
     }
 

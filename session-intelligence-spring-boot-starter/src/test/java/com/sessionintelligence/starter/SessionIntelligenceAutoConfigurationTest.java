@@ -24,7 +24,8 @@ class SessionIntelligenceAutoConfigurationTest {
         contextRunner.run(context -> {
             assertThat(context).hasSingleBean(SessionIntelligenceEngine.class);
             assertThat(context).hasSingleBean(SessionIntelligenceFilter.class);
-            assertThat(context).hasSingleBean(ObservationStore.class);
+            assertThat(context).hasBean("sessionIntelligenceObservationStore");
+            assertThat(context.getBean(ObservationStore.class)).isInstanceOf(FailOpenObservationStore.class);
             assertThat(context).hasSingleBean(FingerprintStrategy.class);
             assertThat(context).hasSingleBean(RiskScorer.class);
             assertThat(context).hasBean("fingerprintDriftDetector");

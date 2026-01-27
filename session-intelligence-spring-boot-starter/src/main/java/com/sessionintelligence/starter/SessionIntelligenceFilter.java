@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,14 +30,19 @@ public class SessionIntelligenceFilter extends OncePerRequestFilter {
 
     private final SessionIntelligenceEngine engine;
     private final SessionIntelligenceProperties properties;
+    private final SessionIntelligenceHasher hasher;
     private final PathMatcher pathMatcher = new AntPathMatcher();
+    private final Pattern windowNamePattern;
 
     public SessionIntelligenceFilter(
             SessionIntelligenceEngine engine,
-            SessionIntelligenceProperties properties
+            SessionIntelligenceProperties properties,
+            SessionIntelligenceHasher hasher
     ) {
         this.engine = engine;
         this.properties = properties;
+        this.hasher = hasher;
+        this.windowNamePattern = compilePattern(properties.getSafety().getWindowNamePattern());
     }
 
     @Override
@@ -101,19 +107,40 @@ public class SessionIntelligenceFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        String windowName = request.getHeader(properties.getHeaders().getWindowName());
+        String windowName = normalizeWindowName(request.getHeader(properties.getHeaders().getWindowName()));
         HttpSession session = request.getSession(false);
         String sessionId = session != null ? session.getId() : null;
         SessionKey sessionKey = new SessionKey(sessionId, windowName);
         PrincipalInfo principal = resolvePrincipalInfo();
+        String rawUserAgent = request.getHeader("User-Agent");
+        String userAgent = properties.getPrivacy().isStoreRawUserAgent() ? rawUserAgent : null;
+        String userAgentHash = hasher != null ? hasher.hashValue(rawUserAgent) : null;
+        String userAgentFamily = extractUaFamily(rawUserAgent);
+        String userAgentMajor = extractUaMajor(rawUserAgent);
+        String clientIp = null;
+        String clientIpHash = null;
+        if (properties.getPrivacy().isIpSignalsEnabled()) {
+            String remoteAddr = request.getRemoteAddr();
+            String ipSegment = truncateIp(remoteAddr);
+            if (properties.getPrivacy().isStoreRawIp()) {
+                clientIp = remoteAddr;
+            }
+            if (hasher != null) {
+                clientIpHash = hasher.hashValue(ipSegment);
+            }
+        }
 
         return new RequestObservation(
                 Instant.now(),
                 request.getMethod(),
                 request.getRequestURI(),
                 response.getStatus(),
-                request.getRemoteAddr(),
-                request.getHeader("User-Agent"),
+                clientIp,
+                clientIpHash,
+                userAgent,
+                userAgentHash,
+                userAgentFamily,
+                userAgentMajor,
                 request.getHeader("Accept-Language"),
                 request.getHeader("Accept-Encoding"),
                 headerNames(request),
@@ -128,12 +155,22 @@ public class SessionIntelligenceFilter extends OncePerRequestFilter {
         if (names == null) {
             return Set.of();
         }
-        Set<String> collected = new HashSet<>();
-        while (names.hasMoreElements()) {
+        int maxHeaders = properties.getSafety().getMaxHeaderCount();
+        int maxNameLength = properties.getSafety().getMaxHeaderNameLength();
+        if (maxHeaders <= 0) {
+            return Set.of();
+        }
+        Set<String> collected = new HashSet<>(Math.min(maxHeaders, 16));
+        while (names.hasMoreElements() && collected.size() < maxHeaders) {
             String name = names.nextElement();
-            if (name != null && !name.isBlank()) {
-                collected.add(name);
+            if (name == null || name.isBlank()) {
+                continue;
             }
+            String normalized = name.trim().toLowerCase();
+            if (normalized.length() > maxNameLength) {
+                continue;
+            }
+            collected.add(normalized);
         }
         return collected;
     }
@@ -166,5 +203,92 @@ public class SessionIntelligenceFilter extends OncePerRequestFilter {
         static PrincipalInfo anonymous() {
             return new PrincipalInfo(null, false);
         }
+    }
+
+    private String normalizeWindowName(String windowName) {
+        if (windowName == null) {
+            return null;
+        }
+        String trimmed = windowName.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        int maxLength = properties.getSafety().getMaxWindowNameLength();
+        if (maxLength > 0 && trimmed.length() > maxLength) {
+            return null;
+        }
+        if (windowNamePattern != null && !windowNamePattern.matcher(trimmed).matches()) {
+            return null;
+        }
+        return trimmed;
+    }
+
+    private Pattern compilePattern(String pattern) {
+        if (pattern == null || pattern.isBlank()) {
+            return null;
+        }
+        return Pattern.compile(pattern);
+    }
+
+    private String extractUaFamily(String userAgent) {
+        if (userAgent == null || userAgent.isBlank()) {
+            return "unknown";
+        }
+        String[] tokens = userAgent.trim().split("\\s+");
+        String first = tokens[0];
+        int slash = first.indexOf('/');
+        if (slash > 0) {
+            return first.substring(0, slash);
+        }
+        return first;
+    }
+
+    private String extractUaMajor(String userAgent) {
+        if (userAgent == null || userAgent.isBlank()) {
+            return "0";
+        }
+        String[] tokens = userAgent.trim().split("\\s+");
+        String first = tokens[0];
+        int slash = first.indexOf('/');
+        if (slash < 0 || slash == first.length() - 1) {
+            return "0";
+        }
+        String version = first.substring(slash + 1);
+        StringBuilder digits = new StringBuilder();
+        for (int i = 0; i < version.length(); i++) {
+            char ch = version.charAt(i);
+            if (Character.isDigit(ch)) {
+                digits.append(ch);
+            } else {
+                break;
+            }
+        }
+        return digits.length() == 0 ? "0" : digits.toString();
+    }
+
+    private String truncateIp(String ip) {
+        if (ip == null || ip.isBlank()) {
+            return "";
+        }
+        if (ip.contains(".")) {
+            String[] parts = ip.split("\\.");
+            if (parts.length >= 3) {
+                return parts[0] + "." + parts[1] + "." + parts[2];
+            }
+            return ip;
+        }
+        if (ip.contains(":")) {
+            String[] parts = ip.split(":");
+            StringBuilder truncated = new StringBuilder();
+            int limit = Math.min(parts.length, 4);
+            for (int i = 0; i < limit; i++) {
+                if (i > 0) {
+                    truncated.append(':');
+                }
+                truncated.append(parts[i]);
+            }
+            return truncated.toString();
+        }
+        return ip;
     }
 }

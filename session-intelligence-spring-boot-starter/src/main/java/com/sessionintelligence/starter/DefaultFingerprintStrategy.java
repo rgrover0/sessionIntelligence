@@ -38,14 +38,24 @@ public class DefaultFingerprintStrategy implements FingerprintStrategy {
 
     private String buildFingerprintInput(RequestObservation observation) {
         String ua = observation != null ? observation.userAgent() : null;
-        String uaFamily = extractUaFamily(ua);
-        String uaMajor = extractUaMajor(ua);
+        String uaFamily = observation != null ? observation.userAgentFamily() : null;
+        if (uaFamily == null || uaFamily.isBlank()) {
+            uaFamily = extractUaFamily(ua);
+        }
+        String uaMajor = observation != null ? observation.userAgentMajor() : null;
+        if (uaMajor == null || uaMajor.isBlank()) {
+            uaMajor = extractUaMajor(ua);
+        }
         String acceptLanguage = observation != null ? nullSafe(observation.acceptLanguage()) : "";
         String acceptEncoding = observation != null ? nullSafe(observation.acceptEncoding()) : "";
         String headerNames = headerNamesValue(observation != null ? observation.headerNames() : null);
         String ipSegment = "";
         if (observation != null && properties.getFingerprint().isIncludeIpSegment()) {
-            ipSegment = truncateIp(observation.clientIp());
+            if (observation.clientIp() != null && !observation.clientIp().isBlank()) {
+                ipSegment = truncateIp(observation.clientIp());
+            } else if (observation.clientIpHash() != null) {
+                ipSegment = observation.clientIpHash();
+            }
         }
         return String.join("|", uaFamily, uaMajor, acceptLanguage, acceptEncoding, headerNames, ipSegment);
     }

@@ -8,7 +8,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.ApplicationEventPublisher;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -31,38 +33,53 @@ import com.sessionintelligence.core.SessionIntelligenceListener;
 )
 public class SessionIntelligenceAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
+    @Bean(name = "sessionIntelligenceObservationStore")
+    @ConditionalOnMissingBean(name = "sessionIntelligenceObservationStore")
     @ConditionalOnProperty(
             prefix = "session-intelligence.storage",
             name = "backend",
             havingValue = "IN_MEMORY",
             matchIfMissing = true
     )
-    public ObservationStore inMemoryObservationStore() {
-        return new InMemoryObservationStore();
+    public ObservationStore sessionIntelligenceObservationStore(SessionIntelligenceProperties properties) {
+        return new InMemoryObservationStore(properties);
     }
 
-    @Bean
-    @ConditionalOnMissingBean
+    @Bean(name = "sessionIntelligenceObservationStore")
+    @ConditionalOnMissingBean(name = "sessionIntelligenceObservationStore")
     @ConditionalOnProperty(
             prefix = "session-intelligence.storage",
             name = "backend",
             havingValue = "INFINISPAN_REMOTE"
     )
-    public ObservationStore infinispanObservationStore(SessionIntelligenceProperties properties) {
+    public ObservationStore sessionIntelligenceObservationStoreInfinispan(SessionIntelligenceProperties properties) {
         return new InfinispanRemoteObservationStore(properties);
     }
 
-    @Bean
-    @ConditionalOnMissingBean
+    @Bean(name = "sessionIntelligenceObservationStore")
+    @ConditionalOnMissingBean(name = "sessionIntelligenceObservationStore")
     @ConditionalOnProperty(
             prefix = "session-intelligence.storage",
             name = "backend",
             havingValue = "REDIS"
     )
-    public ObservationStore redisObservationStore() {
+    public ObservationStore sessionIntelligenceObservationStoreRedis() {
         return new RedisObservationStore();
+    }
+
+    @Bean
+    @Primary
+    @ConditionalOnProperty(
+            prefix = "session-intelligence.safety",
+            name = "fail-open-enabled",
+            havingValue = "true",
+            matchIfMissing = true
+    )
+    public ObservationStore failOpenObservationStore(
+            @Qualifier("sessionIntelligenceObservationStore") ObservationStore delegate,
+            SessionIntelligenceProperties properties
+    ) {
+        return new FailOpenObservationStore(delegate, properties);
     }
 
     @Bean
@@ -234,8 +251,9 @@ public class SessionIntelligenceAutoConfiguration {
     @Bean
     public SessionIntelligenceFilter sessionIntelligenceFilter(
             SessionIntelligenceEngine engine,
-            SessionIntelligenceProperties properties
+            SessionIntelligenceProperties properties,
+            SessionIntelligenceHasher hasher
     ) {
-        return new SessionIntelligenceFilter(engine, properties);
+        return new SessionIntelligenceFilter(engine, properties, hasher);
     }
 }

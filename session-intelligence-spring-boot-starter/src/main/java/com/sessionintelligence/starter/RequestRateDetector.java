@@ -17,9 +17,14 @@ import com.sessionintelligence.core.SessionSnapshot;
 public class RequestRateDetector implements ObservationDetector {
     private final SessionIntelligenceProperties properties;
     private final PathMatcher pathMatcher = new AntPathMatcher();
+    private final SessionIntelligenceMetrics metrics;
 
-    public RequestRateDetector(SessionIntelligenceProperties properties) {
+    public RequestRateDetector(
+            SessionIntelligenceProperties properties,
+            SessionIntelligenceMetrics metrics
+    ) {
         this.properties = properties;
+        this.metrics = metrics;
     }
 
     @Override
@@ -41,6 +46,12 @@ public class RequestRateDetector implements ObservationDetector {
         Duration elapsed = Duration.between(snapshot.firstSeen(), context.observation().timestamp()).abs();
         double minutes = Math.max(1.0d, elapsed.toMillis() / 60_000.0d);
         double rate = snapshot.requestCount() / minutes;
+        if (metrics != null) {
+            metrics.recordRate("session", rate);
+            if (context.windowUpdate() != null && context.windowUpdate().current() != null) {
+                recordWindowRate(context.windowUpdate().current(), context.observation().timestamp());
+            }
+        }
         if (rate <= maxPerMinute) {
             return List.of();
         }
@@ -55,6 +66,16 @@ public class RequestRateDetector implements ObservationDetector {
                 context.observation().timestamp()
         );
         return List.of(finding);
+    }
+
+    private void recordWindowRate(com.sessionintelligence.core.WindowSnapshot snapshot, java.time.Instant now) {
+        if (snapshot == null || snapshot.firstSeen() == null || now == null) {
+            return;
+        }
+        Duration elapsed = Duration.between(snapshot.firstSeen(), now).abs();
+        double minutes = Math.max(1.0d, elapsed.toMillis() / 60_000.0d);
+        double rate = snapshot.requestCount() / minutes;
+        metrics.recordRate("window", rate);
     }
 
     private boolean matchesRateEndpoints(String path) {

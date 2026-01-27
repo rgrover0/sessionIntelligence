@@ -7,8 +7,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.ApplicationEventPublisher;
+
+import io.micrometer.core.instrument.MeterRegistry;
 
 import com.sessionintelligence.core.FingerprintStrategy;
 import com.sessionintelligence.core.ObservationStore;
@@ -64,6 +67,24 @@ public class SessionIntelligenceAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public SessionIntelligenceHasher sessionIntelligenceHasher(SessionIntelligenceProperties properties) {
+        return new SessionIntelligenceHasher(properties);
+    }
+
+    @Bean
+    @ConditionalOnClass(MeterRegistry.class)
+    @ConditionalOnProperty(
+            prefix = "session-intelligence.telemetry",
+            name = "metrics-enabled",
+            havingValue = "true",
+            matchIfMissing = true
+    )
+    public SessionIntelligenceMetrics sessionIntelligenceMetrics(MeterRegistry registry) {
+        return new SessionIntelligenceMetrics(registry);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public FingerprintStrategy fingerprintStrategy(SessionIntelligenceProperties properties) {
         return new DefaultFingerprintStrategy(properties);
     }
@@ -77,9 +98,15 @@ public class SessionIntelligenceAutoConfiguration {
             matchIfMissing = true
     )
     public SessionIntelligenceListener sessionIntelligenceListener(
-            ApplicationEventPublisher publisher
+            ApplicationEventPublisher publisher,
+            ObjectProvider<SessionIntelligenceMetrics> metricsProvider,
+            SessionIntelligenceHasher hasher
     ) {
-        return new PublishingSessionIntelligenceListener(publisher);
+        return new PublishingSessionIntelligenceListener(
+                publisher,
+                metricsProvider.getIfAvailable(),
+                hasher
+        );
     }
 
     @Bean
@@ -95,8 +122,8 @@ public class SessionIntelligenceAutoConfiguration {
             havingValue = "true"
     )
     @ConditionalOnClass(name = "io.opentelemetry.api.OpenTelemetry")
-    public SessionIntelligenceListener otelSessionIntelligenceListener() {
-        return new OtelSessionIntelligenceListener();
+    public SessionIntelligenceListener otelSessionIntelligenceListener(SessionIntelligenceHasher hasher) {
+        return new OtelSessionIntelligenceListener(hasher);
     }
 
     @Bean
@@ -143,8 +170,11 @@ public class SessionIntelligenceAutoConfiguration {
             havingValue = "true",
             matchIfMissing = true
     )
-    public RequestRateDetector requestRateDetector(SessionIntelligenceProperties properties) {
-        return new RequestRateDetector(properties);
+    public RequestRateDetector requestRateDetector(
+            SessionIntelligenceProperties properties,
+            ObjectProvider<SessionIntelligenceMetrics> metricsProvider
+    ) {
+        return new RequestRateDetector(properties, metricsProvider.getIfAvailable());
     }
 
     @Bean

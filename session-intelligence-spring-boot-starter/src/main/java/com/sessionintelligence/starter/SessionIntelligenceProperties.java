@@ -272,6 +272,7 @@ public class SessionIntelligenceProperties {
     public static class Telemetry {
         private boolean publishApplicationEvents = true;
         private boolean otelEnabled = false;
+        private boolean metricsEnabled = true;
 
         public boolean isPublishApplicationEvents() {
             return publishApplicationEvents;
@@ -287,6 +288,14 @@ public class SessionIntelligenceProperties {
 
         public void setOtelEnabled(boolean otelEnabled) {
             this.otelEnabled = otelEnabled;
+        }
+
+        public boolean isMetricsEnabled() {
+            return metricsEnabled;
+        }
+
+        public void setMetricsEnabled(boolean metricsEnabled) {
+            this.metricsEnabled = metricsEnabled;
         }
     }
 

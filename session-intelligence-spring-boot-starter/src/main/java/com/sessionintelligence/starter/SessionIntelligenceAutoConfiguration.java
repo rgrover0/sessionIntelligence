@@ -3,6 +3,7 @@ package com.sessionintelligence.starter;
 import java.util.List;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -73,6 +74,7 @@ public class SessionIntelligenceAutoConfiguration {
 
     @Bean
     @ConditionalOnClass(MeterRegistry.class)
+    @ConditionalOnBean(MeterRegistry.class)
     @ConditionalOnProperty(
             prefix = "session-intelligence.telemetry",
             name = "metrics-enabled",

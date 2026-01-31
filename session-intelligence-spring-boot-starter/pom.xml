@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.sessionintelligence</groupId>
         <artifactId>session-intelligence</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.0.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>spring-boot-starter-session-intelligence</artifactId>
@@ -35,6 +35,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
             <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing</artifactId>
         </dependency>
 
         <dependency>

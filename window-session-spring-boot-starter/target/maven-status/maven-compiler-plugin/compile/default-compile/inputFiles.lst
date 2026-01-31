@@ -1,0 +1,6 @@
+/workspace/window-session-spring-boot-starter/src/main/java/com/sessionintelligence/windowsession/starter/DefaultWindowNameResolver.java
+/workspace/window-session-spring-boot-starter/src/main/java/com/sessionintelligence/windowsession/starter/DefaultWindowSessionKeyResolver.java
+/workspace/window-session-spring-boot-starter/src/main/java/com/sessionintelligence/windowsession/starter/RequestAttributeWindowScopedAttributeAccessor.java
+/workspace/window-session-spring-boot-starter/src/main/java/com/sessionintelligence/windowsession/starter/WindowSessionAutoConfiguration.java
+/workspace/window-session-spring-boot-starter/src/main/java/com/sessionintelligence/windowsession/starter/WindowSessionFilter.java
+/workspace/window-session-spring-boot-starter/src/main/java/com/sessionintelligence/windowsession/starter/WindowSessionProperties.java

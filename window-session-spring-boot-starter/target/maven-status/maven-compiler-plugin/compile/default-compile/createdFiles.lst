@@ -1,0 +1,6 @@
+com/sessionintelligence/windowsession/starter/DefaultWindowNameResolver.class
+com/sessionintelligence/windowsession/starter/DefaultWindowSessionKeyResolver.class
+com/sessionintelligence/windowsession/starter/WindowSessionAutoConfiguration.class
+com/sessionintelligence/windowsession/starter/RequestAttributeWindowScopedAttributeAccessor.class
+com/sessionintelligence/windowsession/starter/WindowSessionFilter.class
+com/sessionintelligence/windowsession/starter/WindowSessionProperties.class

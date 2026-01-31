@@ -1,0 +1,4 @@
+com/sessionintelligence/windowsession/SessionKey.class
+com/sessionintelligence/windowsession/WindowSessionKeyResolver.class
+com/sessionintelligence/windowsession/WindowScopedAttributeAccessor.class
+com/sessionintelligence/windowsession/WindowNameResolver.class

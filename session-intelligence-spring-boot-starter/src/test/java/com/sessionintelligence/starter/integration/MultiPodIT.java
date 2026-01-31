@@ -10,8 +10,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.SpringApplicationBuilder;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -21,7 +22,6 @@ import org.springframework.boot.web.servlet.context.ServletWebServerApplicationC
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +46,8 @@ import com.sessionintelligence.core.WindowSnapshot;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
-class MultiPodIntegrationTest {
+@Tag("integration")
+class MultiPodIT {
     private static final String INFINISPAN_IMAGE = "quay.io/infinispan/server:15.0";
 
     @Container

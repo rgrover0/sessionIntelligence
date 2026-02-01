@@ -1,0 +1,17 @@
+server:
+  port: 8080
+
+window-session:
+  enabled: true
+  window-header-name: "X-Window-Name"
+
+bot-signals:
+  enabled: true
+  include-path-patterns:
+    - "/rate"
+  telemetry:
+    metrics-enabled: false
+  privacy:
+    ip-signals-enabled: false
+    store-raw-ip: false
+    store-raw-user-agent: false

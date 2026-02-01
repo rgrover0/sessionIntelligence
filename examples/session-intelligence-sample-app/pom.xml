@@ -12,7 +12,7 @@
 
     <groupId>com.sessionintelligence</groupId>
     <artifactId>session-intelligence-sample-app</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.9-SNAPSHOT</version>
     <name>Session Intelligence Sample App</name>
     <description>Minimal sample app using the session intelligence starter.</description>
 
@@ -29,7 +29,7 @@
         <dependency>
             <groupId>com.sessionintelligence</groupId>
             <artifactId>spring-boot-starter-session-intelligence</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>0.0.9-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

@@ -23,7 +23,7 @@ Maven dependency (starter):
 <dependency>
   <groupId>com.sessionintelligence</groupId>
   <artifactId>spring-boot-starter-session-intelligence</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.9-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -32,12 +32,12 @@ Optional modules:
 <dependency>
   <groupId>com.sessionintelligence</groupId>
   <artifactId>session-intelligence-store-infinispan</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.9-SNAPSHOT</version>
 </dependency>
 <dependency>
   <groupId>com.sessionintelligence</groupId>
   <artifactId>session-intelligence-otel</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.9-SNAPSHOT</version>
 </dependency>
 ```
 
